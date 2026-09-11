@@ -105,6 +105,19 @@ jobs:
     name: Test frontend
     runs-on: ubuntu-latest
 
+    # frontend/src/config/serviceUrls.js throws at import time if any of
+    # these VITE_*_SERVICE_URL variables are missing. Vite only loads
+    # frontend/.env.production in "production" mode, not in the "test"
+    # mode Vitest runs under, so they must be provided here explicitly
+    # (mirrors how backend-test supplies POSTGRES_*/JWT_* above). Values
+    # match frontend/.env.production.
+    env:
+      VITE_USER_SERVICE_URL: /api/user-service
+      VITE_STUDENT_SERVICE_URL: /api/student-service
+      VITE_LECTURER_SERVICE_URL: /api/lecturer-service
+      VITE_COURSE_SERVICE_URL: /api/course-service
+      VITE_ENROLLMENT_SERVICE_URL: /api/enrollment-service
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v5
