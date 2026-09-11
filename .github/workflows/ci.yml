@@ -1,6 +1,14 @@
+$yaml = @'
 name: CI Pipeline
 
 on:
+  # Runs automatically whenever code is pushed to the main branch
+  # (added so the pipeline demonstrates the "trigger on push" requirement;
+  # the original file only had workflow_dispatch).
+  push:
+    branches:
+      - main
+
   # Manual trigger for the workflow
   workflow_dispatch:
 
@@ -77,11 +85,14 @@ jobs:
 
     steps:
 
+      # v5 targets the Node.js 24 runtime (v4 targeted Node.js 20, which
+      # triggered the "Node.js 20 is deprecated" warning).
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
+      # v6 targets the Node.js 24 runtime (v5 targeted Node.js 20).
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: "3.12"
 
@@ -136,11 +147,15 @@ jobs:
 
     steps:
 
+      # v5 targets the Node.js 24 runtime (v4 targeted Node.js 20).
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
+      # v3 targets the Node.js 24 runtime (v2 targeted Node.js 20, which was
+      # the main source of the deprecation warning since it still ran even
+      # after the test/checkout/setup-python actions above were updated).
       - name: Login to Azure
-        uses: azure/login@v2
+        uses: azure/login@v3
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
@@ -165,3 +180,5 @@ jobs:
         run: |
           docker push \
             ${{ vars.ACR_LOGIN_SERVER }}/${{ matrix.image }}:latest
+'@
+Set-Content -Path .\ci.yml -Value $yaml
