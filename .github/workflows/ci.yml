@@ -2,8 +2,6 @@ name: CI Pipeline
 
 on:
   # Runs automatically whenever code is pushed to the main branch
-  # (added so the pipeline demonstrates the "trigger on push" requirement;
-  # the original file only had workflow_dispatch).
   push:
     branches:
       - main
@@ -81,12 +79,9 @@ jobs:
       AZURE_STORAGE_CONTAINER_NAME: ""
 
     steps:
-      # v5 targets the Node.js 24 runtime (v4 targeted Node.js 20, which
-      # triggered the "Node.js 20 is deprecated" warning).
       - name: Checkout repository
         uses: actions/checkout@v5
 
-      # v6 targets the Node.js 24 runtime (v5 targeted Node.js 20).
       - name: Set up Python
         uses: actions/setup-python@v6
         with:
@@ -104,15 +99,48 @@ jobs:
           pytest -v
 
   # =========================================================
+  # Frontend Tests  (added for Task 7.2C)
+  # =========================================================
+  frontend-test:
+    name: Test frontend
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      # v6 targets the Node.js 24 runtime, matching the node24-based
+      # actions already used elsewhere in this workflow (checkout@v5,
+      # setup-python@v6, azure/login@v3) so no deprecation warning is
+      # reintroduced.
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Run tests
+        working-directory: frontend
+        run: npm run test:run
+
+  # =========================================================
   # Build and Push Docker Images
   # =========================================================
   build-and-push:
     name: Build and Push ${{ matrix.image }}
     runs-on: ubuntu-latest
 
-    # All backend tests must pass before this job starts
+    # Both the backend tests AND the new frontend tests must pass before
+    # this job starts (Task 7.2C requirement: a failing frontend test
+    # must block the build & push stage).
     needs:
       - backend-test
+      - frontend-test
 
     # Build and push when code is pushed to main or manually triggered
     if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
@@ -141,13 +169,9 @@ jobs:
             image: koalatech-enrollment-service
 
     steps:
-      # v5 targets the Node.js 24 runtime (v4 targeted Node.js 20).
       - name: Checkout repository
         uses: actions/checkout@v5
 
-      # v3 targets the Node.js 24 runtime (v2 targeted Node.js 20, which was
-      # the main source of the deprecation warning since it still ran even
-      # after the test/checkout/setup-python actions above were updated).
       - name: Login to Azure
         uses: azure/login@v3
         with:
