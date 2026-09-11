@@ -1,16 +1,5 @@
-import {
-  fireEvent,
-  render,
-  screen,
-  waitFor,
-} from "@testing-library/react";
-import {
-  beforeEach,
-  describe,
-  expect,
-  it,
-  vi,
-} from "vitest";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { MemoryRouter } from "react-router-dom";
 
 import Login from "../pages/Login";
@@ -25,7 +14,7 @@ const renderLogin = () => {
       <AuthProvider>
         <Login />
       </AuthProvider>
-    </MemoryRouter>
+    </MemoryRouter>,
   );
 };
 
@@ -38,26 +27,25 @@ describe("Login page", () => {
   it("displays the login form", () => {
     renderLogin();
 
+    // Intentionally broken for Task 7.2C: this text does not exist on the
+    // page, so this assertion will fail and the frontend-test job (and
+    // therefore build-and-push, which depends on it) should not proceed.
     expect(
-      screen.getByText(
-        "KoalaTech University"
-      )
+      screen.getByText("KoalaTech University BROKEN FOR CI TEST"),
     ).toBeInTheDocument();
 
     expect(
       screen.getByRole("textbox", {
         name: /username/i,
-      })
+      }),
     ).toBeInTheDocument();
 
-    expect(
-      screen.getByLabelText(/password/i)
-    ).toBeInTheDocument();
+    expect(screen.getByLabelText(/password/i)).toBeInTheDocument();
 
     expect(
       screen.getByRole("button", {
         name: /login/i,
-      })
+      }),
     ).toBeInTheDocument();
   });
 
@@ -77,28 +65,23 @@ describe("Login page", () => {
         target: {
           value: "admin",
         },
-      }
+      },
     );
 
-    fireEvent.change(
-      screen.getByLabelText(/password/i),
-      {
-        target: {
-          value: "password123",
-        },
-      }
-    );
+    fireEvent.change(screen.getByLabelText(/password/i), {
+      target: {
+        value: "password123",
+      },
+    });
 
     fireEvent.click(
       screen.getByRole("button", {
         name: /login/i,
-      })
+      }),
     );
 
     await waitFor(() => {
-      expect(
-        authService.login
-      ).toHaveBeenCalledWith({
+      expect(authService.login).toHaveBeenCalledWith({
         username: "admin",
         password: "password123",
       });
@@ -124,28 +107,21 @@ describe("Login page", () => {
         target: {
           value: "wronguser",
         },
-      }
+      },
     );
 
-    fireEvent.change(
-      screen.getByLabelText(/password/i),
-      {
-        target: {
-          value: "wrongpassword",
-        },
-      }
-    );
+    fireEvent.change(screen.getByLabelText(/password/i), {
+      target: {
+        value: "wrongpassword",
+      },
+    });
 
     fireEvent.click(
       screen.getByRole("button", {
         name: /login/i,
-      })
+      }),
     );
 
-    expect(
-      await screen.findByText(
-        "Invalid credentials"
-      )
-    ).toBeInTheDocument();
+    expect(await screen.findByText("Invalid credentials")).toBeInTheDocument();
   });
 });
